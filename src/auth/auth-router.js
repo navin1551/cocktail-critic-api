@@ -21,6 +21,7 @@ authRouter.post("/login", jsonParser, (req, res, next) => {
         return res.status(400).json({
           error: "Incorrect user name or password"
         });
+
       return AuthService.comparePasswords(
         loginUser.password,
         dbUser.password
@@ -29,6 +30,7 @@ authRouter.post("/login", jsonParser, (req, res, next) => {
           return res.status(400).json({
             error: "Incorrect user name or password"
           });
+
         const sub = dbUser.user_name;
         const payload = { user_id: dbUser.id };
         res.send({
@@ -37,6 +39,7 @@ authRouter.post("/login", jsonParser, (req, res, next) => {
       });
     })
     .catch(next);
+  res.send("ok");
 });
 
 module.exports = authRouter;
