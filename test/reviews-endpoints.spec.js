@@ -84,6 +84,7 @@ describe("Review Endpoints", function() {
 
   describe("POST /api/reviews", () => {
     it("creates a review, responding with 201 and the new review", () => {
+      this.retries(3);
       const newReview = {
         name: "Test new name",
         image: "https://image.com/images.jpeg",

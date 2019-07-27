@@ -1,5 +1,6 @@
 const express = require("express");
 const ReviewService = require("./review-service");
+const { requireAuth } = require("../middleware/basic-auth");
 const xss = require("xss");
 
 const reviewRouter = express.Router();
@@ -26,10 +27,12 @@ reviewRouter
       .catch(next);
   })
 
-  .post(jsonParser, (req, res, next) => {
+  .post(requireAuth, jsonParser, (req, res, next) => {
     const knexInstance = req.app.get("db");
     const { id, name, image, comment, rating, date_created } = req.body;
     const newReview = { id, name, image, comment, rating, date_created };
+
+    newReview.user_id = req.user.id;
 
     ReviewService.insertReviews(knexInstance, newReview)
       .then(review => {
