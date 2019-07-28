@@ -2,12 +2,11 @@ const express = require("express");
 const AuthService = require("./auth-service");
 
 const authRouter = express.Router();
-const jsonParser = express.json();
+const jsonBodyParser = express.json();
 
-authRouter.post("/login", jsonParser, (req, res, next) => {
+authRouter.post("/login", jsonBodyParser, (req, res, next) => {
   const { user_name, password } = req.body;
   const loginUser = { user_name, password };
-  const knexInstance = req.app.get("db");
 
   for (const [key, value] of Object.entries(loginUser))
     if (value == null)
@@ -15,7 +14,7 @@ authRouter.post("/login", jsonParser, (req, res, next) => {
         error: `Missing '${key}' in request body`
       });
 
-  AuthService.getUserWithUserName(knexInstance, loginUser.user_name)
+  AuthService.getUserWithUserName(req.app.get("db"), loginUser.user_name)
     .then(dbUser => {
       if (!dbUser)
         return res.status(400).json({
@@ -39,7 +38,6 @@ authRouter.post("/login", jsonParser, (req, res, next) => {
       });
     })
     .catch(next);
-  res.send("ok");
 });
 
 module.exports = authRouter;
