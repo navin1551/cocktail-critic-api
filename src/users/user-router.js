@@ -1,86 +1,52 @@
 const express = require("express");
-const path = require("path");
 const UserService = require("./user-service");
-const xss = require("xss");
 
 const userRouter = express.Router();
+const path = require("path");
 const jsonParser = express.json();
 
-const serializeUser = user => ({
-  id: user.id,
-  first_name: xss(user.first_name),
-  last_name: xss(user.last_name),
-  email: xss(user.email)
+userRouter.post("/", jsonParser, (req, res, next) => {
+  const { first_name, last_name, email, password, user_name } = req.body;
+
+  for (const field of [
+    "first_name",
+    "last_name",
+    "email",
+    "user_name",
+    "password"
+  ])
+    if (!req.body[field])
+      return res.status(400).json({
+        error: `Missing '${field}' in required field`
+      });
+
+  const passwordError = UserService.validatePassword(password);
+
+  if (passwordError) return res.status(400).json({ error: passwordError });
+
+  UserService.hasUserWithUserName(req.app.get("db"), user_name)
+    .then(hasUserWithUserName => {
+      if (hasUserWithUserName)
+        return res.status(400).json({ error: "Username already taken" });
+
+      return UserService.hashPassword(password).then(hashedPassword => {
+        const newUser = {
+          first_name,
+          last_name,
+          email,
+          user_name,
+          password: hashedPassword
+        };
+
+        return UserService.insertUser(req.app.get("db"), newUser).then(user => {
+          res
+            .status(201)
+            .location(path.posix.join(req.originalUrl, `/${user.id}`))
+            .json(UserService.serializeUser(user));
+        });
+      });
+    })
+    .catch(next);
 });
-
-userRouter
-  .route("/")
-  .get((req, res, next) => {
-    const knexInstance = req.app.get("db");
-    UserService.getAllUsers(knexInstance)
-      .then(users => {
-        res.json(users);
-      })
-      .catch(next);
-  })
-
-  .post(jsonParser, (req, res, next) => {
-    const knexInstance = req.app.get("db");
-    const { first_name, last_name, email, user_name, password } = req.body;
-    const newUser = { first_name, last_name, email, user_name, password };
-    UserService.insertUser(knexInstance, newUser)
-      .then(user => {
-        res
-          .status(201)
-          .location(path.posix.join(req.originalUrl, `/${user.id}`))
-          .json(serializeUser(user));
-      })
-      .catch(next);
-  });
-
-userRouter
-  .route("/:id")
-  .all((req, res, next) => {
-    const knexInstance = req.app.get("db");
-    const { id } = req.params;
-
-    UserService.getById(knexInstance, id)
-      .then(user => {
-        if (!user) {
-          return res.status(404).json({
-            error: { message: `User doesn't exist` }
-          });
-        }
-        res.user = user;
-        next();
-      })
-      .catch(next);
-  })
-
-  .get((req, res) => {
-    res.json(serializeUser(res.user));
-  })
-
-  .delete((req, res, next) => {
-    const knexInstance = req.app.get("db");
-    const { id } = req.params;
-
-    UserService.deleteUser(knexInstance, id)
-      .then(() => {
-        res.status(204).end();
-      })
-      .catch(next);
-  })
-
-  .patch(jsonParser, (req, res, next) => {
-    const knexInstance = req.app.get("db");
-    const { first_name, last_name, email, user_name, password } = req.body;
-    const userToUpdate = { first_name, last_name, email, user_name, password };
-    UserService.updateUser(knexInstance, req.params.id, userToUpdate)
-      .then(numRowsAffected => {
-        res.status(204).end();
-      })
-      .catch(next);
-  });
 
 module.exports = userRouter;
