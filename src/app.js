@@ -15,7 +15,7 @@ const morganOption = NODE_ENV === "production" ? "tiny" : "common";
 app.use(morgan(morganOption));
 app.use(cors());
 app.use(helmet());
-app.use(express.json());
+app.use(express.static(__dirname + "/client/build"));
 
 app.use("/api/reviews", reviewRouter);
 app.use("/api/users", userRouter);

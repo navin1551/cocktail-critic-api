@@ -5,6 +5,15 @@ const userRouter = express.Router();
 const path = require("path");
 const jsonParser = express.json();
 
+userRouter.route("/").get((req, res, next) => {
+  const knexInstance = req.app.get("db");
+  UserService.getAllUsers(knexInstance)
+    .then(users => {
+      res.json(users);
+    })
+    .catch(next);
+});
+
 userRouter.post("/", jsonParser, (req, res, next) => {
   const { first_name, last_name, email, password, user_name } = req.body;
 
