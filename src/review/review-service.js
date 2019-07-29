@@ -7,9 +7,12 @@ const ReviewService = {
         "reviews.image",
         "reviews.comment",
         "reviews.rating",
-        "reviews.date_created"
+        "reviews.date_created",
+        "reviews.user_id",
+        "users.user_name"
       )
-      .from("reviews");
+      .from("reviews")
+      .join("users", { "users.id": "reviews.user_id" });
   },
 
   getById(knex, id) {
@@ -40,6 +43,13 @@ const ReviewService = {
     return knex("reviews")
       .where({ id })
       .update(newReviewFields);
+  },
+
+  getUserReviews(knex, user_id) {
+    return knex
+      .select("*")
+      .where("user_id", user_id)
+      .from("reviews");
   }
 };
 

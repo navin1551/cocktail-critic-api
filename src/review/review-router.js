@@ -98,4 +98,19 @@ reviewRouter
       .catch(next);
   });
 
+reviewRouter.route("/myreviews/:user_id").get((req, res, next) => {
+  const { user_id } = req.params;
+  const knexInstance = req.app.get("db");
+  ReviewService.getUserReviews(knexInstance, user_id)
+    .then(review => {
+      if (!review) {
+        return res
+          .status(409)
+          .send({ error: { message: `User reviews don't exist` } });
+      }
+      res.status(200).json(review);
+    })
+    .catch(next);
+});
+
 module.exports = reviewRouter;
