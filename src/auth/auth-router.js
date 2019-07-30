@@ -7,7 +7,6 @@ const jsonBodyParser = express.json();
 authRouter.post("/login", jsonBodyParser, (req, res, next) => {
   const { user_name, password } = req.body;
   const loginUser = { user_name, password };
-
   for (const [key, value] of Object.entries(loginUser))
     if (value == null)
       return res.status(400).json({
@@ -18,16 +17,15 @@ authRouter.post("/login", jsonBodyParser, (req, res, next) => {
     .then(dbUser => {
       if (!dbUser)
         return res.status(400).json({
-          error: "Incorrect user name or password"
+          error: "Incorrect user name"
         });
-
       return AuthService.comparePasswords(
         loginUser.password,
         dbUser.password
       ).then(compareMatch => {
         if (!compareMatch)
           return res.status(400).json({
-            error: "Incorrect user name or password"
+            error: "Incorrect password"
           });
 
         const sub = dbUser.user_name;
