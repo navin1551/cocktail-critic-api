@@ -1,9 +1,18 @@
 const app = require("../src/app");
 const knex = require("knex");
 const { makeReviewsArray } = require("./reviews.fixtures");
+const jwt = require("jsonwebtoken");
 
 describe("Review Endpoints", function() {
   let db;
+
+  function makeAuthHeader(user, secret = process.env.JWT_SECRET) {
+    const token = jwt.sign({ user_id: user.id }, secret, {
+      subject: user.user_name,
+      algorithm: "HS256"
+    });
+    return `bearer ${token}`;
+  }
 
   before("make knex instance", () => {
     db = knex({
@@ -86,15 +95,27 @@ describe("Review Endpoints", function() {
     it("creates a review, responding with 201 and the new review", () => {
       this.retries(3);
       const newReview = {
+        id: 1,
         name: "Test new name",
         image: "https://image.com/images.jpeg",
         comment: "Test comment",
-        rating: 1
+        rating: 1,
+        date_created: "2029-01-22T16:28:32.615Z"
+      };
+
+      const testUser = {
+        id: 1,
+        first_name: "Test",
+        last_name: "User",
+        email: "testemail1@email.com",
+        user_name: "testuser1",
+        password: "password1"
       };
 
       return supertest(app)
         .post("/api/reviews")
         .send(newReview)
+        .set("Authorization", makeAuthHeader(testUser))
         .expect(201)
         .expect(res => {
           expect(res.body.name).to.eql(newReview.name);

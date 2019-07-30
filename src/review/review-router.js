@@ -28,7 +28,6 @@ reviewRouter
 
   .post(requireAuth, jsonParser, (req, res, next) => {
     const knexInstance = req.app.get("db");
-    console.log(req.body);
     const { id, name, image, comment, rating, date_created } = req.body;
     const newReview = { id, name, image, comment, rating, date_created };
 
